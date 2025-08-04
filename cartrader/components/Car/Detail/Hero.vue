@@ -5,7 +5,7 @@ const props = defineProps({
 </script>
 <template>
     <div class="mt-10">
-          <img :src="car.url" class="w-full" alt="">
+          <NuxtImg :src="car.url" class="w-full" alt="" />
           <!-- <div class="absolute inset-0 flex flex-col justify-end p-8"> -->
           <h1 class="mt-10 text-4xl">{{ car.name  }}</h1>
           <div class="text-slate-500 flex text-lg mt-3 border-b border-gray-200 pb-5 justify-between">
