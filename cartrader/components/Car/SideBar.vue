@@ -105,7 +105,7 @@ const onChangePrice = () => {
           v-for="make in makes"
           :key="make"
           class="w-1/3"
-          @click="onChangePrice(make)"
+          @click="onChangeMake(make)"
         >
           {{ make }}
         </h4>
