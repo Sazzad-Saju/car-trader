@@ -1,5 +1,4 @@
 <script setup>
-const user = useSupabaseUser()
 const logout = () => {
   //1. user.value = null
   //2. Remove token from Cookie browser
