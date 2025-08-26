@@ -1,27 +1,15 @@
 // composables/useApi.js
 export const useApi = () => {
-  const { $axios } = useNuxtApp() // Access the global axios instance
+  const { $axios } = useNuxtApp()
 
-  // Function to perform GET requests
   const get = async (url, params = {}) => {
-    try {
-      const response = await $axios.get(url, { params })
-      return response.data
-    } catch (error) {
-      console.error('Error during GET request:', error)
-      throw error
-    }
+    const { data } = await $axios.get(url, { params })  // url like '/auth/user'
+    return data
   }
 
-  // Function to perform POST requests
-  const post = async (url, data) => {
-    try {
-      const response = await $axios.post(url, data)
-      return response.data
-    } catch (error) {
-      console.error('Error during POST request:', error)
-      throw error
-    }
+  const post = async (url, body = {}) => {
+    const { data } = await $axios.post(url, body)       // url like '/auth/logout'
+    return data
   }
 
   return { get, post }

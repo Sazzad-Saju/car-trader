@@ -3,15 +3,11 @@ definePageMeta({
     layout: "custom",
 });
 
-// const supabase = useSupabaseClient()
+const config = useRuntimeConfig()
 
-const login = async () => {
-    // const {error} = await supabase.auth.signInWithOAuth({
-    //     provider: "google"
-    // })
-    // if (error) {
-    //     console.log(error)
-    // }
+const login = () => {
+  const apiOrigin = new URL(config.public.apiBaseUrl).origin // -> http://127.0.0.1:8000
+  window.location.href = `${apiOrigin}/auth/google/redirect`
 }
 </script>
 
