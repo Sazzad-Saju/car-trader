@@ -1,15 +1,15 @@
+<template>
+  <div>Signing you in…</div>
+</template>
+
 <script setup>
 import { onMounted } from 'vue'
-import Cookies from "js-cookie";
 import { useUserStore } from "~/stores/user";
+import { useCookie } from '#app';  // Using Nuxt's `useCookie`
 
 const route = useRoute();
 const router = useRouter();
 const store = useUserStore();
-
-definePageMeta({
-  middleware: [],
-});
 
 onMounted(async () => {
   const tokenParam = route.query.token;
@@ -23,20 +23,24 @@ onMounted(async () => {
 
   if (tokenParam && typeof tokenParam === "string") {
     store.setToken(tokenParam);
-    const authToken = useCookie("auth_token", {
-      maxAge: 60 * 60 * 24 * 30,
-      sameSite: "lax",
-      secure: process.client && location.protocol === "https:",
-      httpOnly: false,
+
+    // Ensure consistent cookie settings (same path, same site, etc.)
+    const authToken = useCookie('auth_token', {
+      path: '/',                // Path to ensure it works across the entire domain
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      sameSite: 'lax',           // Lax for cross-site requests
+      secure: process.client && location.protocol === "https:",  // Secure flag for HTTPS
+      httpOnly: false,           // Allow access via JavaScript
     });
     authToken.value = tokenParam;
+
     try {
-      await store.getUser();
-      await router.replace(redirect);
+      await store.getUser(); // Ensure user is fetched after setting the token
+      await router.replace(redirect); // Redirect to the original page
     } catch (e) {
       console.log('getUser error:', e);
       store.resetState();
-      Cookies.remove("auth_token");
+      authToken.value = null;  // Clear cookie on error
       await router.replace("/login");
     }
   } else {
@@ -44,7 +48,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<template>
-  <div>Signing you in…</div>
-</template>

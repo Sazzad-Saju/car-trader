@@ -5,20 +5,22 @@ import { useCars } from '~/composables/useCars'
 
 definePageMeta({
   layout: "custom",
-  middleware: ["auth"],
+  middleware: ["auth"], // Ensure the auth middleware is applied
 });
-const {listings} = useCars();
 
-const userStore = useUserStore()
-
+const { listings } = useCars();
+const userStore = useUserStore();
 const user = computed(() => userStore.user);
 
 onMounted(async () => {
-  userStore.initAuth();
+  // Ensure the user data is available after middleware check
   if (!user.value) {
+    console.log('userData refetching');
     await userStore.getUser();
+  } else {
+    console.log('userData already fetched');
   }
-})
+});
 </script>
 
 <template>

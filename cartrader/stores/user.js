@@ -1,95 +1,124 @@
-import { defineStore } from "pinia";
-import Cookies from 'js-cookie'
-import axios from "axios";
+import { defineStore } from 'pinia';
+import { useCookie } from '#app';  // Nuxt's `useCookie` to handle cookies
+import axios from 'axios';
 
 export const useUserStore = defineStore('user', {
 
-    state: () => ({
-        user: null,
-        api_token: '',
-        isLoggedIn: false,
-        isRegisterSuccess: false,
-        registerMessage: '',
-    }),
+  state: () => ({
+    user: null,
+    api_token: '',       // Store token if needed for other purposes
+    isLoggedIn: false,
+    isRegisterSuccess: false,
+    registerMessage: '',
+  }),
 
-    actions: {
-        setToken(token) {
-            if (!token) return;
-            Cookies.set('auth_token', token);
-            this.api_token = token;
-            console.log('Token set:', token);
-            axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
-        },
-        initAuth() {
-            const token = Cookies.get('auth_token');
-            if (token) {
-                this.setToken(token);
-            }
-        },
-        async login(email, password, session_id) {
-            await axios.post('/login', {
-                email: email,
-                password: password,
-                session_id: session_id,
-            }).then(({ data }) => {
-                this.setToken(data?.data?.token);
-                this.user = data.data
-                this.isLoggedIn = true;
-            });
-        },
-        async register(payload) {
-            const router = useRouter();
-            try {
-                const { data } = await axios.post('/register', payload);
-                if (data.success) {
-                    this.isRegisterSuccess = true
-                    this.registerMessage = 'Sign up completed. Please verify your email.'
-                } else {
-                    this.isRegisterSuccess = false
-                    this.registerMessage = ''
-                    console.log(data.message);
-                }
-                return data; // Return the response data
-            } catch ({ data }) {
-                this.isRegisterSuccess = false
-                this.registerMessage = ''
-                console.log(data.message);
-                // errors.value = error.response.data.errors
-                return data; // Return the error response data
-            }
-        },
-        async getUser() {
-            await axios.get('/user').then(({ data }) => {
-                if (data) {
-                    this.user = data; // <-- change here
-                    console.log('User fetched:', this.user);
-                    this.isLoggedIn = true;
-                } else {
-                    this.resetState();
-                }
-            }).catch((err) => {
-                console.log(err);
-                this.resetState();
-            });
-        },
-        async logout() {
-            const router = useRouter();
-            await axios.post('/logout')
-            Cookies.remove('auth_token')
-            this.resetState()
-            await router.push('/login')
-        },
-        resetState() {
-            this.user = null
-            this.api_token = ''
-            this.isLoggedIn = false
-            this.isRegisterSuccess = false
-            delete axios.defaults.headers.common['Authorization'];
-        },
-        persist: {
-            paths: ['user', 'api_token', 'isLoggedIn'],
-        },
-    }
+  actions: {
+    // Set token to both state and cookie
+    setToken(token) {
+      if (!token) return;
+      
+      // Use Nuxt's `useCookie` to set the token
+      const authToken = useCookie('auth_token', { path: '/' });
+      authToken.value = token;
 
+      this.api_token = token;
+      console.log('Token set:', token);
 
-})
+      // Set the token globally for Axios requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    },
+
+    // Initialize authentication and set token if available
+    initAuth() {
+      const authToken = useCookie('auth_token', { path: '/' }).value;
+      if (authToken) {
+        this.setToken(authToken); // Set token if it exists in the cookie
+      }
+    },
+
+    // Login action, POST request to authenticate
+    async login(email, password, session_id) {
+      try {
+        const { data } = await axios.post('/login', { email, password, session_id });
+
+        if (data?.data?.token) {
+          this.setToken(data.data.token);  // Set token after successful login
+          this.user = data.data;
+          this.isLoggedIn = true;
+        }
+
+      } catch (error) {
+        console.error('Login failed:', error);
+        throw new Error('Login failed');
+      }
+    },
+
+    // Register action, POST request to register a new user
+    async register(payload) {
+      try {
+        const { data } = await axios.post('/register', payload);
+
+        if (data.success) {
+          this.isRegisterSuccess = true;
+          this.registerMessage = 'Sign up completed. Please verify your email.';
+        } else {
+          this.isRegisterSuccess = false;
+          this.registerMessage = '';
+          console.log(data.message);
+        }
+        return data;  // Return the response data
+      } catch (error) {
+        console.error('Registration failed:', error);
+        this.isRegisterSuccess = false;
+        this.registerMessage = '';
+        return error.response.data; // Return the error response data
+      }
+    },
+
+    // Fetch user data, requires authentication
+    async getUser() {
+      try {
+        const { data } = await axios.get('/user');
+        if (data) {
+          this.user = data;
+          this.isLoggedIn = true;
+          console.log('User fetched:', this.user);
+        } else {
+          this.resetState();  // Reset if no data
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        this.resetState();  // Reset if there is an error
+      }
+    },
+
+    // Logout action
+    async logout() {
+      try {
+        await axios.post('/logout');
+        this.resetState();  // Reset store state after logout
+        const authToken = useCookie('auth_token', { path: '/' });
+        authToken.value = null;  // Remove token from cookie
+        await this.$router.push('/login');
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    },
+
+    // Reset user state
+    resetState() {
+      this.user = null;
+      this.api_token = '';
+      this.isLoggedIn = false;
+      this.isRegisterSuccess = false;
+      this.registerMessage = '';
+      
+      // Remove token from axios header globally
+      delete axios.defaults.headers.common['Authorization'];
+    },
+  },
+
+  persist: {
+    paths: ['user', 'api_token', 'isLoggedIn'],
+  },
+});
