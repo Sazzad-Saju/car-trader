@@ -1,5 +1,7 @@
 <script setup>
-import { useApi } from '~/composables/useApi'
+import { computed, onMounted } from 'vue'
+import { useUserStore } from '~/stores/user'
+import { useCars } from '~/composables/useCars'
 
 definePageMeta({
   layout: "custom",
@@ -7,35 +9,27 @@ definePageMeta({
 });
 const {listings} = useCars();
 
-const { get } = useApi()
-// Current user (client-only to avoid SSR cookie/401 issues)
-const { data: me } = await useAsyncData(
-  'me',
-  async () => {
-    try {
-      return await get('/auth/user') // -> http://127.0.0.1:8000/api/auth/user
-    } catch (err) {
-      // Not logged in (401) or other issue
-      return null
-    }
-  },
-  { server: false } // important!
-)
+const userStore = useUserStore()
+
+const user = computed(() => userStore.user);
+
+onMounted(async () => {
+  userStore.initAuth();
+  if (!user.value) {
+    await userStore.getUser();
+  }
+})
 </script>
 
 <template>
   <div>
     <!-- User Info -->
-    <div v-if="me" class="mt-6 p-4 border rounded flex items-center gap-4">
-      <img
-        v-if="me.avatar"
-        :src="me.avatar"
-        alt="Avatar"
-        class="w-12 h-12 rounded-full object-cover"
-      />
+    <pre>User: {{ user }}</pre>
+    <div v-if="user" class="mt-6 p-4 border rounded flex items-center gap-4">
+      <img v-if="user.avatar" :src="user.avatar" alt="Avatar" class="w-12 h-12 rounded-full object-cover" />
       <div>
-        <p class="font-semibold">Welcome, {{ me.name }}!</p>
-        <p class="text-sm text-gray-600">{{ me.email }}</p>
+        <p class="font-semibold">Welcome, {{ user.name }}!</p>
+        <p class="text-sm text-gray-600">{{ user.email }}</p>
       </div>
     </div>
     

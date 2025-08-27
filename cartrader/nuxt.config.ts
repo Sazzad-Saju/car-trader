@@ -1,4 +1,5 @@
-// nuxt.config.ts
+import { defineNuxtConfig } from 'nuxt/config'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
@@ -6,10 +7,22 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxt/image',
     '@vueuse/nuxt',
+    '@pinia/nuxt',
+    '@pinia-plugin-persistedstate/nuxt',
   ],
+  pinia: {
+    storesDirs: ['./stores/**'],
+  },
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.NUXT_API_BASE_URL,
+       API_BASE_URL: process.env.API_BASE_URL,
+       BASE_URL: process.env.BASE_URL,
     }
+  },
+  piniaPersistedstate: {
+      cookieOptions: {
+          sameSite: 'strict',
+      },
+      storage: 'localStorage'
   },
 })

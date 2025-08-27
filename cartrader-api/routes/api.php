@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', fn () => ['status' => 'ok']);
 Route::get('/greeting', fn () => ['message' => 'Hello from Laravel API']);
 
-Route::middleware('auth:sanctum')->get('/auth/user', function (Request $request) {
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     $u = $request->user(); // User model from your googleCallback
     return response()->json([
         'id'          => $u->id,

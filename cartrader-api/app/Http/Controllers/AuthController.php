@@ -40,6 +40,8 @@ class AuthController extends Controller
         // Issue Sanctum token
         $token = $user->createToken('web')->plainTextToken;
 
+        logger($token);
+
         // Send user back to Nuxt with token in the URL
         $frontend = rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/');
         return redirect()->away($frontend.'/auth/callback?token='.$token);

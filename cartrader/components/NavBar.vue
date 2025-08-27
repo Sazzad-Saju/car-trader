@@ -1,9 +1,23 @@
 <script setup>
-const { user, fetchUser, logout } = useAuth()
+import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '~/stores/user'
+
+const userStore = useUserStore()
+const user = computed(() => userStore.user)
+const isLoggedIn = computed(() => userStore.isLoggedIn)
+const loading = ref(true)
 
 // Ensure user state is populated on refresh
-onMounted(() => {
-  if (!user.value) fetchUser().catch(() => {})
+onMounted(async () => {
+  // Try to fetch user only if not already loaded
+  if (!user.value) {
+    try {
+      await userStore.getUser()
+    } catch (e) {
+      // handle error if needed
+    }
+  }
+  loading.value = false
 })
 </script>
 <template>
@@ -11,9 +25,12 @@ onMounted(() => {
       class="sticky top-0 z-50 flex justify-between items-center space-x-1 border-b-4 border-white bg-white shadow-md px-4"
       style="height: 5rem;">
       <Nuxt-Link class="text-3xl font-mono" to="/">Car Trader</Nuxt-Link>
-      <div v-if="user" class="flex items-center">
+      <div v-if="loading" class="flex items-center">
+        <span class="animate-pulse text-gray-400">Loading...</span>
+      </div>
+      <div v-else-if="isLoggedIn" class="flex items-center">
         <NuxtLink class="mr-5" to="/profile/listings">profile</NuxtLink>
-        <p class="cursor-pointer" @click="logout">Logout</p>
+        <p class="cursor-pointer" @click="userStore.logout">Logout</p>
       </div>
       <NuxtLink v-else to="/login">Login</NuxtLink>
     </header>
