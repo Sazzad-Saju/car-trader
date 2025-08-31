@@ -1,124 +1,116 @@
-import { defineStore } from 'pinia';
-import { useCookie } from '#app';  // Nuxt's `useCookie` to handle cookies
-import axios from 'axios';
+// stores/user.js
+import { defineStore } from 'pinia'
+import axios from 'axios'
+import { useCookie } from '#app'
+
+const COOKIE_NAME = 'auth_token'
 
 export const useUserStore = defineStore('user', {
-
   state: () => ({
     user: null,
-    api_token: '',       // Store token if needed for other purposes
+    api_token: '',
     isLoggedIn: false,
     isRegisterSuccess: false,
     registerMessage: '',
   }),
 
   actions: {
-    // Set token to both state and cookie
+    // Canonical place to set token (cookie + axios header + state)
     setToken(token) {
-      if (!token) return;
-      
-      // Use Nuxt's `useCookie` to set the token
-      const authToken = useCookie('auth_token', { path: '/' });
-      authToken.value = token;
-
-      this.api_token = token;
-      console.log('Token set:', token);
-
-      // Set the token globally for Axios requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      if (!token) return
+      const cookie = useCookie(COOKIE_NAME, { path: '/' })
+      cookie.value = token
+      this.api_token = token
+      this.isLoggedIn = true
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
     },
 
-    // Initialize authentication and set token if available
+    // Hydrate on boot/refresh (SSR-safe)
     initAuth() {
-      const authToken = useCookie('auth_token', { path: '/' }).value;
-      if (authToken) {
-        this.setToken(authToken); // Set token if it exists in the cookie
+      const cookie = useCookie(COOKIE_NAME, { path: '/' })
+      const token = cookie.value
+      if (token) {
+        this.api_token = token
+        this.isLoggedIn = true
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      } else {
+        this.resetState()
       }
     },
 
-    // Login action, POST request to authenticate
-    async login(email, password, session_id) {
+    // Email/password login
+    async login(email, password) {
       try {
-        const { data } = await axios.post('/login', { email, password, session_id });
-
-        if (data?.data?.token) {
-          this.setToken(data.data.token);  // Set token after successful login
-          this.user = data.data;
-          this.isLoggedIn = true;
+        const { data } = await axios.post('/login', { email, password })
+        const token = data?.data?.token
+        if (token) {
+          this.setToken(token)
+          this.user = data.data
         }
-
+        return data
       } catch (error) {
-        console.error('Login failed:', error);
-        throw new Error('Login failed');
+        console.error('Login failed:', error)
       }
     },
 
-    // Register action, POST request to register a new user
     async register(payload) {
       try {
-        const { data } = await axios.post('/register', payload);
-
+        const { data } = await axios.post('/register', payload)
         if (data.success) {
-          this.isRegisterSuccess = true;
-          this.registerMessage = 'Sign up completed. Please verify your email.';
+          this.isRegisterSuccess = true
+          this.registerMessage = 'Sign up completed. Please verify your email.'
         } else {
-          this.isRegisterSuccess = false;
-          this.registerMessage = '';
-          console.log(data.message);
+          this.isRegisterSuccess = false
+          this.registerMessage = ''
+          console.log(data.message)
         }
-        return data;  // Return the response data
+        return data
       } catch (error) {
-        console.error('Registration failed:', error);
-        this.isRegisterSuccess = false;
-        this.registerMessage = '';
-        return error.response.data; // Return the error response data
+        console.error('Registration failed:', error)
+        this.isRegisterSuccess = false
+        this.registerMessage = ''
+        return error?.response?.data
       }
     },
 
-    // Fetch user data, requires authentication
     async getUser() {
       try {
-        const { data } = await axios.get('/user');
+        const { data } = await axios.get('/user')
         if (data) {
-          this.user = data;
-          this.isLoggedIn = true;
-          console.log('User fetched:', this.user);
+          this.user = data
+          this.isLoggedIn = true
         } else {
-          this.resetState();  // Reset if no data
+          this.resetState()
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
-        this.resetState();  // Reset if there is an error
+        console.error('Failed to fetch user:', error)
+        this.resetState()
+        throw error
       }
     },
 
-    // Logout action
     async logout() {
       try {
-        await axios.post('/logout');
-        this.resetState();  // Reset store state after logout
-        const authToken = useCookie('auth_token', { path: '/' });
-        authToken.value = null;  // Remove token from cookie
-        await this.$router.push('/login');
-      } catch (error) {
-        console.error('Logout failed:', error);
+        await axios.post('/logout').catch(() => {})
+      } finally {
+        const cookie = useCookie(COOKIE_NAME, { path: '/' })
+        cookie.value = null // delete cookie
+        this.resetState()
       }
     },
 
-    // Reset user state
     resetState() {
-      this.user = null;
-      this.api_token = '';
-      this.isLoggedIn = false;
-      this.isRegisterSuccess = false;
-      this.registerMessage = '';
-      
-      // Remove token from axios header globally
-      delete axios.defaults.headers.common['Authorization'];
+      this.user = null
+      this.api_token = ''
+      this.isLoggedIn = false
+      this.isRegisterSuccess = false
+      this.registerMessage = ''
+      delete axios.defaults.headers.common.Authorization
     },
   },
 
+  // Do NOT persist api_token via Pinia (cookie already persists it)
   persist: {
-    paths: ['user', 'api_token', 'isLoggedIn'],
+    paths: ['user', 'isLoggedIn'],
   },
-});
+})

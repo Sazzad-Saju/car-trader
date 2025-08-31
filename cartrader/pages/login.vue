@@ -1,18 +1,25 @@
 <script setup>
+import axios from 'axios'
 definePageMeta({
   layout: "custom",
-  middleware: ['already-authed']
 });
 
 import { ref } from 'vue'
 import { useUserStore } from '~/stores/user'
+import { useCookie } from '#app'
+import { useRoute, useRouter } from 'vue-router'
+
 const userStore = useUserStore()
+const route = useRoute()
+const router = useRouter()
 const config = useRuntimeConfig()
 
+const isSpinner = ref(false)
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+let errors = ref({})
 
 const loginWithGoogle = () => {
   const apiOrigin = new URL(config.public.API_BASE_URL).origin
@@ -21,10 +28,21 @@ const loginWithGoogle = () => {
 
 const login = async () => {
   loading.value = true
-  error.value = ''
+  errors.value = {}
+  isSpinner.value = true
   try {
-    await userStore.loginWithEmail(email.value, password.value)
-    navigateTo('/')
+    const data = await userStore.login(email.value, password.value)
+    const token = useCookie('auth_token', { path: '/' })
+    if (userStore.api_token) {
+      token.value = userStore.api_token
+      axios.defaults.headers.common['Authorization'] = 'Bearer ' + userStore.api_token
+    }
+    await userStore.getUser()
+    if (route.query.redirect) {
+      await router.replace(route.query.redirect)
+      return
+    }
+    await router.push('/')
   } catch (e) {
     error.value = 'Invalid credentials'
   } finally {
