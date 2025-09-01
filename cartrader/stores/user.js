@@ -1,7 +1,7 @@
 // stores/user.js
 import { defineStore } from 'pinia'
 import axios from 'axios'
-import { useCookie } from '#app'
+import { useCookie, useRouter } from '#app'
 
 const COOKIE_NAME = 'auth_token'
 
@@ -96,6 +96,11 @@ export const useUserStore = defineStore('user', {
         const cookie = useCookie(COOKIE_NAME, { path: '/' })
         cookie.value = null // delete cookie
         this.resetState()
+
+        if (process.client) {
+          const router = useRouter()
+          router.push('/')
+        }
       }
     },
 

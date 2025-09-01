@@ -1,16 +1,15 @@
 // plugins/axios.js
 import axios from 'axios'
 import { useUserStore } from '~/stores/user.js'
+import { useRouter } from '#app'
 
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
   axios.defaults.baseURL = config.public.API_BASE_URL
   axios.defaults.withCredentials = false
   axios.defaults.proxyHeaders = false
 
-  // ---- Request interceptor (SSR + client) ----
   axios.interceptors.request.use((req) => {
-    // Always read the freshest token via useCookie (SSR-safe)
     const token = useCookie('auth_token', { path: '/' }).value
     if (token) {
       req.headers = req.headers || {}
@@ -21,29 +20,33 @@ export default defineNuxtPlugin((nuxtApp) => {
     return req
   })
 
-  // ---- Response interceptor (mostly client concern) ----
   axios.interceptors.response.use(
     (response) => response,
     async (error) => {
       const { response } = error || {}
+
       if (response && response.status === 401) {
-        // Clear app auth state
+        // 1) Clear auth state + cookie
         const store = useUserStore()
         store.resetState()
-
-        // Clear cookie using Nuxt's API
         const cookie = useCookie('auth_token', { path: '/' })
         cookie.value = null
 
-        // Optional: client-side redirect to login, preserving current path
+        // 2) Only redirect if current route is protected (/profile/**)
         if (process.client) {
           const router = useRouter()
-          try {
-            await router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
-          } catch (_) {}
+          const currentPath = router.currentRoute.value.fullPath || '/'
+          const isProtected = currentPath.startsWith('/profile')
+
+          // Do NOT redirect on public routes (/, /cars, /login, etc.)
+          if (isProtected) {
+            try {
+              await router.push({ path: '/login', query: { redirect: currentPath } })
+            } catch (_) {}
+          }
         }
       }
-      // Always reject to let callers handle details if needed
+
       return Promise.reject(response || error)
     }
   )

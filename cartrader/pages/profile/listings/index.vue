@@ -5,7 +5,7 @@ import { useCars } from '~/composables/useCars'
 
 definePageMeta({
   layout: "custom",
-  middleware: ["auth"], // Ensure the auth middleware is applied
+  // middleware: ["auth"], // Ensure the auth middleware is applied
 });
 
 const { listings } = useCars();

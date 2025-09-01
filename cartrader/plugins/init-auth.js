@@ -1,4 +1,4 @@
-// plugins/init-auth.js  (note: no .client)
+// plugins/init-auth.js
 import { useUserStore } from '~/stores/user'
 
 export default defineNuxtPlugin(() => {

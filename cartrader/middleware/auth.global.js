@@ -1,8 +1,7 @@
-// middleware/auth.js
-import axios from 'axios'
-import { useUserStore } from '~/stores/user'
-
+// middleware/auth.global.js
 export default defineNuxtRouteMiddleware((to) => {
+  if (!to.path.startsWith('/profile')) return
+
   const token = useCookie('auth_token', { path: '/' })
   if (!token.value) {
     return navigateTo({
