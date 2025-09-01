@@ -3,5 +3,5 @@ import { useUserStore } from '~/stores/user'
 
 export default defineNuxtPlugin(() => {
   const store = useUserStore()
-  store.initAuth()
+  store.initAuth()  // Initialize the user's auth state on app load
 })
