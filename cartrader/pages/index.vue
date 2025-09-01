@@ -8,7 +8,7 @@ useHead({
 <template>
   <div>
     <div v-if="auth?.isLoggedIn">
-      <h2>Welcome back, {{ auth.user.name }}!</h2>
+      <h2>Welcome back, {{ auth.user?.name }}!</h2>
     </div>
     <div v-else>
       <h2>Please log in to access your account.</h2>

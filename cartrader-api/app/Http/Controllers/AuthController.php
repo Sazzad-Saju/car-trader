@@ -7,7 +7,9 @@ use App\Models\User;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -15,7 +17,7 @@ class AuthController extends Controller
     public function googleRedirect()
     {
         return Socialite::driver('google')
-            ->scopes(['openid','email','profile'])
+            ->scopes(['openid', 'email', 'profile'])
             ->redirect();
     }
 
@@ -47,7 +49,7 @@ class AuthController extends Controller
 
         // Send user back to Nuxt with token in the URL
         $frontend = rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/');
-        return redirect()->away($frontend.'/auth/callback?token='.$token);
+        return redirect()->away($frontend . '/auth/callback?token=' . $token);
     }
 
     // login
@@ -66,13 +68,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if(! $user) {
+        if (! $user) {
             throw ValidationException::withMessages([
                 'email' => 'Email is not exists in our records! Please register!',
             ]);
         }
 
-        if(! Hash::check($request->password, $user->password)) {
+        if (! Hash::check($request->password, $user->password)) {
             return response()->json(['status' => false, 'message' => 'The provided credentials are incorrect.']);
         }
 
@@ -81,5 +83,59 @@ class AuthController extends Controller
 
         $user->user_type = 'customer';
         return new AuthResource($user);
+    }
+
+    public function register(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'email', 'unique:users,email'],
+                'avatar' => ['nullable', 'image', 'max:2048'],
+                'password' => ['required', 'confirmed', 'min:8'],
+            ]);
+
+            // Handle avatar upload
+            $avatarPath = null;
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            }
+
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'avatar' => $avatarPath,
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'data' => $user,
+                'message' => 'Sign up completed. Please verify your email.'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Catch the validation error and return a structured response
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors(),  // This gives the validation errors in the correct format
+                'message' => 'Sign up failed!'
+            ]);
+        } catch (\Exception $e) {
+            logger('error');
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Sign up failed! ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function user(Request $request)
+    {
+        logger($request->user());
+        return new AuthResource($request->user());
     }
 }

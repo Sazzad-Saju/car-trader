@@ -1,4 +1,4 @@
-// middleware/already-authed.js
+// middleware/guest.js
 export default defineNuxtRouteMiddleware((to) => {
   if (to.path === '/callback') return
 

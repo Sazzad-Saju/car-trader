@@ -55,29 +55,32 @@ export const useUserStore = defineStore('user', {
 
     async register(payload) {
       try {
-        const { data } = await axios.post('/register', payload)
+        const { data } = await axios.post('/register', payload);
         if (data.success) {
-          this.isRegisterSuccess = true
-          this.registerMessage = 'Sign up completed. Please verify your email.'
+          this.isRegisterSuccess = true;
+          this.registerMessage = 'Sign up completed. Please verify your email.';
         } else {
-          this.isRegisterSuccess = false
-          this.registerMessage = ''
-          console.log(data.message)
+          this.isRegisterSuccess = false;
+          this.registerMessage = '';
+          // If validation fails, the errors are now returned in data.errors
+          return { success: false, errors: data.errors };
         }
-        return data
+        return data;
       } catch (error) {
-        console.error('Registration failed:', error)
-        this.isRegisterSuccess = false
-        this.registerMessage = ''
-        return error?.response?.data
+        console.error('Registration failed:', error);
+        this.isRegisterSuccess = false;
+        this.registerMessage = '';
+        // If there's an unexpected error (like a network error), handle gracefully
+        return { success: false, errors: error?.response?.data?.errors || {} };
       }
     },
+
 
     async getUser() {
       try {
         const { data } = await axios.get('/user')
         if (data) {
-          this.user = data
+          this.user = data.data
           this.isLoggedIn = true
         } else {
           this.resetState()
@@ -91,7 +94,7 @@ export const useUserStore = defineStore('user', {
 
     async logout() {
       try {
-        await axios.post('/logout').catch(() => {})
+        await axios.post('/logout').catch(() => { })
       } finally {
         const cookie = useCookie(COOKIE_NAME, { path: '/' })
         cookie.value = null // delete cookie

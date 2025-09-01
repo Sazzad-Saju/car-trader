@@ -18,15 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', fn () => ['status' => 'ok']);
 Route::get('/greeting', fn () => ['message' => 'Hello from Laravel API']);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    $u = $request->user(); // User model from your googleCallback
-    return response()->json([
-        'id'          => $u->id,
-        'name'        => $u->name,
-        'email'       => $u->email,
-        'avatar'      => $u->avatar,
-    ]);
-});
+Route::middleware('auth:sanctum')->get('/user', [AuthController::class, 'user']);
 
 Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
     $request->user()->currentAccessToken()->delete();
@@ -34,3 +26,5 @@ Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
 });
 
 Route::post('login', [AuthController::class, 'login']);
+Route::post('register', [AuthController::class, 'register']);
+

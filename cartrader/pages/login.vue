@@ -2,6 +2,7 @@
 import axios from 'axios'
 definePageMeta({
   layout: "custom",
+  middleware: 'guest'
 });
 
 import { ref } from 'vue'
