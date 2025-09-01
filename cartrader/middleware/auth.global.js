@@ -1,6 +1,8 @@
 // middleware/auth.global.js
+import { isProtectedPath } from '~/utils/protectedRoutes'
+
 export default defineNuxtRouteMiddleware((to) => {
-  if (!to.path.startsWith('/profile')) return
+  if (!isProtectedPath(to.path)) return
 
   const token = useCookie('auth_token', { path: '/' })
   if (!token.value) {

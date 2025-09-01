@@ -2,6 +2,7 @@
 import axios from 'axios'
 import { useUserStore } from '~/stores/user.js'
 import { useRouter } from '#app'
+import { isProtectedPath } from '~/utils/protectedRoutes' // ✅ reuse
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
@@ -26,27 +27,21 @@ export default defineNuxtPlugin(() => {
       const { response } = error || {}
 
       if (response && response.status === 401) {
-        // 1) Clear auth state + cookie
         const store = useUserStore()
         store.resetState()
         const cookie = useCookie('auth_token', { path: '/' })
         cookie.value = null
 
-        // 2) Only redirect if current route is protected (/profile/**)
         if (process.client) {
           const router = useRouter()
           const currentPath = router.currentRoute.value.fullPath || '/'
-          const isProtected = currentPath.startsWith('/profile')
-
-          // Do NOT redirect on public routes (/, /cars, /login, etc.)
-          if (isProtected) {
+          if (isProtectedPath(currentPath)) {
             try {
               await router.push({ path: '/login', query: { redirect: currentPath } })
             } catch (_) {}
           }
         }
       }
-
       return Promise.reject(response || error)
     }
   )
