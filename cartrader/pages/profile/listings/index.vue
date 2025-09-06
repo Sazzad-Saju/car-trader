@@ -26,7 +26,6 @@ onMounted(async () => {
 <template>
   <div>
     <!-- User Info -->
-    <pre>User: {{ user }}</pre>
     <div v-if="user" class="mt-6 p-4 border rounded flex items-center gap-4">
       <img v-if="user.avatar" :src="user.avatar" alt="Avatar" class="w-12 h-12 rounded-full object-cover" />
       <div>

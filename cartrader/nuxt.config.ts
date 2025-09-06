@@ -25,4 +25,7 @@ export default defineNuxtConfig({
       },
       storage: 'localStorage'
   },
+  image: {
+    domains: ['lh3.googleusercontent.com'],
+  },
 })
