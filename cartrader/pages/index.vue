@@ -1,5 +1,12 @@
 <script setup>
-const auth = useUserStore()
+const user = useSupabaseUser()
+const userStore = useUserStore()
+const isAuthenticated = userStore.user !== null
+
+const logout = async () => {
+  await userStore.logout()
+  return navigateTo('/login')
+}
 useHead({
   title: 'Car Trader - Home',
 });
@@ -7,11 +14,15 @@ useHead({
 </script>
 <template>
   <div>
-    <div v-if="auth?.isLoggedIn">
-      <h2>Welcome back, {{ auth.user?.name }}!</h2>
+    <div v-if="isAuthenticated">
+      <h2>Welcome back, {{user?.email }}!</h2>
     </div>
     <div v-else>
-      <h2>Please log in to access your account.</h2>
+      <h2>
+        <button class="mt-6 bg-gray-800 text-white px-4 py-2 rounded" @click="logout">
+          Logout
+        </button>
+      </h2>
     </div>
     <CarHero />
   </div>

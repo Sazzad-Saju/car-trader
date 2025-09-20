@@ -3,7 +3,6 @@ import { AuthSignUpConfirmation } from '#components';
 import { ref } from 'vue'
 definePageMeta({
   layout: "custom",
-  middleware: 'guest'
 });
 
 const userStore = useUserStore()
