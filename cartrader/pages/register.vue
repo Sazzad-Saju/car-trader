@@ -21,7 +21,7 @@ const register = async () => {
   error.value = userStore.error
 
   if (ok) {
-    router.push('/dashboard')
+    router.push('/')
   }
 }
 </script>

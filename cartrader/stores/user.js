@@ -31,7 +31,6 @@ export const useUserStore = defineStore('user', {
         const supabase = useSupabaseClient()
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        // user is now set via the watcher
         return true
       } catch (err) {
         this.error = err?.message || 'Login failed'
@@ -63,9 +62,9 @@ export const useUserStore = defineStore('user', {
     },
 
     async logout() {
-      // const supabase = useSupabaseClient()
-      // await supabase.auth.signOut()
-      // this.user = null
+      const supabase = useSupabaseClient()
+      await supabase.auth.signOut()
+      this.user = null
     }
   }
 })

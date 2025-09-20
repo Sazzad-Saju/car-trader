@@ -1,6 +1,7 @@
 <script setup>
 definePageMeta({
   layout: "custom",
+  // middleware: ["auth"], // Ensure the auth middleware is applied
 });
 </script>
 <template>

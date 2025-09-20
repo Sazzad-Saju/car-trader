@@ -12,7 +12,7 @@ const route = useRoute()
 const router = useRouter()
 
 if (userStore.user) {
-  router.push('/dashboard')
+  router.push('/')
 }
 
 const login = async () => {
@@ -25,7 +25,7 @@ const login = async () => {
   error.value = userStore.error
 
   if (ok) {
-    const to = route.query.redirect || '/dashboard' // change to your app's home
+    const to = route.query.redirect || '/' // change to your app's home
     router.push(to)
   }
 }

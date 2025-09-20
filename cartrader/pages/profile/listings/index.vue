@@ -29,7 +29,7 @@ onMounted(async () => {
     <div v-if="user" class="mt-6 p-4 border rounded flex items-center gap-4">
       <img v-if="user.avatar" :src="user.avatar" alt="Avatar" class="w-12 h-12 rounded-full object-cover" />
       <div>
-        <p class="font-semibold">Welcome, {{ user.name }}!</p>
+        <p class="font-semibold">Welcome, {{ user?.user_metadata?.name }}!</p>
         <p class="text-sm text-gray-600">{{ user.email }}</p>
       </div>
     </div>

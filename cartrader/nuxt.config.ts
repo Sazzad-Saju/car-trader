@@ -11,6 +11,9 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@pinia-plugin-persistedstate/nuxt',
   ],
+    supabase: {
+      redirect: false, // Disable automatic redirects
+    },
   pinia: {
     storesDirs: ['./stores/**'],
   },

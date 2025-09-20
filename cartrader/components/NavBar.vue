@@ -1,16 +1,15 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useUserStore } from '~/stores/user'
 
 const userStore = useUserStore()
-const user = useSupabaseUser()
-const isAuthenticated = userStore.user !== null
+
+const isAuthenticated = computed(() => userStore.user !== null)
 
 const logout = async () => {
-  // await userStore.logout()
-  // return navigateTo('/login')
+  await userStore.logout()
+  return navigateTo('/login')
 }
-
 </script>
 <template>
     <header
