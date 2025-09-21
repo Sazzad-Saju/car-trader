@@ -10,32 +10,33 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Car {
-  id              Int         @id @default(autoincrement())
-  name            String
-  numberOfSeats   Int
-  miles           Int
-  price           Int
-  image           String
-  features        String[]
-  description     String
-  city            String
-  model           String
-  make            String
-  listerId        String
-  messages        Message[]
+  id            Int       @id @default(autoincrement())
+  name          String
+  numberOfSeats Int
+  miles         Int
+  price         Int
+  image         String
+  features      String[]
+  description   String
+  city          String
+  model         String
+  make          String
+  listerId      String
+  messages      Message[]
 }
 
 model Message {
-  id              Int           @id @default(autoincrement())
-  name            String
-  email           String
-  phone           String
-  message         String
-  listingId       Int
-  listing         Car   @relation(field: [listerId], reference: [id])
+  id        Int    @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String
+  message   String
+  listingId Int
+  listing   Car    @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }
