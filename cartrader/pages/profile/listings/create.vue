@@ -1,10 +1,12 @@
 <script setup>
+import { v4 as uuidv4 } from 'uuid';
 definePageMeta({
     layout: "custom",
     // middleware: ["auth"], // Ensure the auth middleware is applied
 });
 const { makes } = useCars();
 const user = useSupabaseUser();
+const supabase = useSupabaseClient();
 
 const info = useState('adInfo', () => {
     return {
@@ -17,7 +19,7 @@ const info = useState('adInfo', () => {
         seats: "",
         features: "",
         description: "",
-        image: "asdfg",
+        image: null,
     }
 });
 
@@ -80,6 +82,17 @@ const isButtonDisabled = computed(() => {
 });
 
 const handleSubmit =  async () => {
+    let filename = uuidv4();
+     if (info.value.image) {
+        const ext = info.value.image.type.split('/')[1];
+        filename = `${filename}.${ext}`;
+    }
+    const {data,error} = await supabase.storage.from('images').upload("public/" + filename, info.value.image);
+    
+    if(error){
+        return errorMessage.value = error.message;
+    }
+    
     const body = { 
         ...info.value, 
         city: info.value.city.toLowerCase(),
@@ -90,7 +103,7 @@ const handleSubmit =  async () => {
         year: parseInt(info.value.year),
         name: `${info.value.make} ${info.value.model}`,
         listerId: user.value.id,
-        image: 'https://via.placeholder.com/600x400.png?text=Car+Image'
+        image: data.path,
     };
     
     delete body.seats;
@@ -103,6 +116,7 @@ const handleSubmit =  async () => {
         navigateTo("/profile/listings");
     }catch(err){
         errorMessage.value = err.statusMessage
+        supabase.storage.from('images').remove([data.path]);
     }
 }
 </script>
@@ -116,7 +130,7 @@ const handleSubmit =  async () => {
             <CarAdSelect title="Make *" :options="makes" name="make" @change-input="onChangeInput" />
             <CarAdInput v-for="input in inputs" :key="input.id" :title="input.title" :name="input.name" :placeholder="input.placeholder" @change-input="onChangeInput" />
             <CarAdTextArea title="Description *" name="description" placeholder="" @change-input="onChangeInput" />
-            <CarAdImage  />
+            <CarAdImage @change-input="onChangeInput"/>
             <div>
                 <button :disabled="isButtonDisabled" @click="handleSubmit" class="bg-blue-400 text-white px-4 py-2 mt-2 rounded hover:bg-blue-600 transition">Submit</button>
                 <p v-if="errorMessage" class="mt-3 text-red-400">{{ errorMessage }}</p>
