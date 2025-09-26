@@ -8,19 +8,25 @@ definePageMeta({
   // middleware: ["auth"], // Ensure the auth middleware is applied
 });
 
-const { listings } = useCars();
-const userStore = useUserStore();
-const user = computed(() => userStore.user);
+const user = useSupabaseUser();
+// const { listings } = useCars();
+const {data: listings, refresh} = await useFetch(
+  `/api/car/listings/user/${user.value?.id}`
+)
 
-onMounted(async () => {
-  // Ensure the user data is available after middleware check
-  if (!user.value) {
-    console.log('userData refetching');
-    await userStore.getUser();
-  } else {
-    console.log('userData already fetched');
-  }
-});
+const handleDelete = async (id) => {
+  console.log("Deleting listing with ID:", id);
+  await $fetch(`/api/car/listings/${id}`, {
+    method: "DELETE"
+  });
+  listings.value = listings.value.filter(listing => listing.id !== id);
+  // refresh(); // Optionally refresh the listings from the server
+}
+
+// const userStore = useUserStore();
+// const user = computed(() => userStore.user);
+
+
 </script>
 
 <template>
@@ -45,7 +51,7 @@ onMounted(async () => {
       </NuxtLink>
     </div>
     <div class="shadow rounded p-3 mt-5">
-      <CarListingCard v-for="listing in listings" :key="listing.id" :listing="listing" />
+      <CarListingCard v-for="listing in listings" :key="listing.id" :listing="listing" @delete-listing="handleDelete" />
     </div>
   </div>
 </template>
