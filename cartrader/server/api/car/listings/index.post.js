@@ -1,4 +1,4 @@
-//  /server/api/car/listings/index.js
+//  /server/api/car/listings/index.post.js
 import Joi from "joi";
 import { prisma } from "~/server/utils/prisma";
 
@@ -21,6 +21,7 @@ const schema = Joi.object({
 });
 
 export default defineEventHandler(async (event) => {
+   
    const body = await readBody(event);
    
    const { error, value } = schema.validate(body);
